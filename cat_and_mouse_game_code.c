@@ -65,37 +65,37 @@ void draw_entrance_exit();
 
 int main(void)
 {
-        volatile int *pixel_ctrl_ptr = (int *)0xFF203020;
-	volatile int *SW_ptr = (int *)0xFF200040;
-	volatile int *KEY_ptr = (int *)0xFF200050;
-	volatile int *LED_ptr = (int *)0xFF200000;
+    volatile int *pixel_ctrl_ptr = (int *)0xFF203020;
+    volatile int *SW_ptr = (int *)0xFF200040;
+    volatile int *KEY_ptr = (int *)0xFF200050;
+    volatile int *LED_ptr = (int *)0xFF200000;
 	
-	int SW_value, KEY_value;
-	bool start_game = false;
-	bool level_one = false;
-	bool start_level_two =false;
-	bool level_two = false;
+    int SW_value, KEY_value;
+    bool start_game = false;
+    bool level_one = false;
+    bool start_level_two =false;
+    bool level_two = false;
 	
-	//initialize mouse position
-	int dx_box = 0; //movement in x direction
-	int dy_box = 0; //movement in y direction	
-	int x_box = 0; //top left corner position
-	int y_box = 120; //top left corner position
-	int old_x_box = x_box;
-	int old_y_box = y_box;
+    //initialize mouse position
+    int dx_box = 0; //movement in x direction
+    int dy_box = 0; //movement in y direction	
+    int x_box = 0; //top left corner position
+    int y_box = 120; //top left corner position
+    int old_x_box = x_box;
+    int old_y_box = y_box;
 	
-	//initialize cat position
-	int cat_random_direction = 3;
-	bool change_direction = false;
-	int cat_dx_box = 0;
-	int cat_dy_box = 0;
-	int cat_x_box = 42;
-	int cat_y_box = 2;
-	int cat_old_x_box = cat_x_box;
-	int cat_old_y_box = cat_y_box;
+    //initialize cat position
+    int cat_random_direction = 3;
+    bool change_direction = false;
+    int cat_dx_box = 0;
+    int cat_dy_box = 0;
+    int cat_x_box = 42;
+    int cat_y_box = 2;
+    int cat_old_x_box = cat_x_box;
+    int cat_old_y_box = cat_y_box;
 
     //set front pixel buffer to start of FPGA On-chip memory
-	//first store the address is the back buffer
+    //first store the address is the back buffer
     *(pixel_ctrl_ptr + 1) = 0xC8000000;
 	
     //now, swap the front/back buffers, to set the front buffer location
@@ -104,417 +104,427 @@ int main(void)
     //initialize a pointer to the pixel buffer, used by drawing functions
     pixel_buffer_start = *pixel_ctrl_ptr;
     start_screen(); 
-	*LED_ptr = 0;
+    *LED_ptr = 0;
 	
-	//pixel_buffer_start points to the pixel buffer
+    //pixel_buffer_start points to the pixel buffer
     //set back pixel buffer to start of SDRAM memory
     *(pixel_ctrl_ptr + 1) = 0xC0000000;
     pixel_buffer_start = *(pixel_ctrl_ptr + 1); //we draw on the back buffer
 	
-	KEY_value = *KEY_ptr;
-	while (!start_game) {
-		KEY_value = *KEY_ptr;
-		if (KEY_value == 0x1) {
-			start_game = true;
-			break;
-		}
+    KEY_value = *KEY_ptr;
+    while (!start_game) {
+        KEY_value = *KEY_ptr;
+	if (KEY_value == 0x1) {
+            start_game = true;
+            break;
 	}
+    }
 	
-	game_screen();
-	//initialize the maze
-	srand(time(NULL));
+    game_screen();
+    //initialize the maze
+    srand(time(NULL));
     dfs(0, 0);
-	//plot maze
-	map();
-	draw_entrance_exit();
+    //plot maze
+    map();
+    draw_entrance_exit();
 	
-	wait_for_vsync();
-	pixel_buffer_start = *(pixel_ctrl_ptr + 1);
-	game_screen();
-	//plot maze
-	map();
-	draw_entrance_exit();
+    wait_for_vsync();
+    pixel_buffer_start = *(pixel_ctrl_ptr + 1);
+    game_screen();
+    //plot maze
+    map();
+    draw_entrance_exit();
 	
-	//initialize global variables for level 1 timer
-	minutes = 2;
-	seconds = 30;
-	msec = 0;
-	bool hex_display_on = count_down_timer();
+    //initialize global variables for level 1 timer
+    minutes = 2;
+    seconds = 30;
+    msec = 0;
+    bool hex_display_on = count_down_timer();
 	
-	//start timer
-	clock_t before = clock();
+    //start timer
+    clock_t before = clock();
     while (!level_one) {
 		
         //erase cat and mouse that were drawn in the last iteration
-		clear_old_box(old_x_box, old_y_box);
-		clear_old_box(cat_old_x_box, cat_old_y_box);
+	clear_old_box(old_x_box, old_y_box);
+	clear_old_box(cat_old_x_box, cat_old_y_box);
 		
-		*LED_ptr = 1; //indicates that you are on level 1
+	*LED_ptr = 1; //indicates that you are on level 1
 		
-		SW_value = *SW_ptr;
+	SW_value = *SW_ptr;
 		
-		map();
-	    draw_entrance_exit();
+	map();
+	draw_entrance_exit();
      	
-		draw_mouse(x_box, y_box);
-		draw_cat(cat_x_box, cat_y_box);
+	draw_mouse(x_box, y_box);
+	draw_cat(cat_x_box, cat_y_box);
 		
-		//update location of the mouse
-		if ((SW_value == 0x1) && (x_box > 0) && (maze_limit(x_box,y_box,1) == false)) { //move left
-			dx_box = -1;
-			dy_box = 0;
-		} else if ((SW_value == 0x2) && (x_box <= 299) && (maze_limit(x_box,y_box,2) == false)) { //move right
-			dx_box = 1;
-			dy_box = 0;
-		} else if ((SW_value == 0x4) && (y_box > 0) && (maze_limit(x_box,y_box,3) == false)) { //move up
-			dx_box = 0;
-			dy_box = -1;
-		} else if ((SW_value == 0x8) && (y_box <= 219) && (maze_limit(x_box,y_box,4) == false)) { //move down
-			dx_box = 0;
-			dy_box = 1;
-		} else {
-			dx_box = 0;
-			dy_box = 0;
-		}
+	//update location of the mouse
+	if ((SW_value == 0x1) && (x_box > 0) && (maze_limit(x_box,y_box,1) == false)) { //move left
+	    dx_box = -1;
+	    dy_box = 0;
+	} else if ((SW_value == 0x2) && (x_box <= 299) && (maze_limit(x_box,y_box,2) == false)) { //move right
+	    dx_box = 1;
+	    dy_box = 0;
+	} else if ((SW_value == 0x4) && (y_box > 0) && (maze_limit(x_box,y_box,3) == false)) { //move up
+	    dx_box = 0;
+	    dy_box = -1;
+	} else if ((SW_value == 0x8) && (y_box <= 219) && (maze_limit(x_box,y_box,4) == false)) { //move down
+	    dx_box = 0;
+	    dy_box = 1;
+	} else {
+	    dx_box = 0;
+	    dy_box = 0;
+	}
 				   
-		old_x_box = x_box;
-		old_y_box = y_box;
-		x_box+=dx_box;
-		y_box+=dy_box;
+	old_x_box = x_box;
+	old_y_box = y_box;
+	x_box+=dx_box;
+	y_box+=dy_box;
 		
-		//update location of the cat
-		if ((cat_random_direction == 1) && (cat_x_box > 41) && (maze_limit(cat_x_box,cat_y_box,1) == false)) { //move left
-			cat_dx_box = -1;
-			cat_dy_box = 0;
-		} else if (cat_random_direction == 1) {
-			cat_dx_box = 0;
-			cat_dy_box = 0;
-			change_direction = true;
-		} else if ((cat_random_direction == 2) && (cat_x_box <= 260) && (maze_limit(cat_x_box,cat_y_box,2) == false)) { //move right
-			cat_dx_box = 1;
-			cat_dy_box = 0;
-		} else if (cat_random_direction == 2) {
-			cat_dx_box = 0;
-			cat_dy_box = 0;
-			change_direction = true;
-		} else if ((cat_random_direction == 3) && (cat_y_box > 2) && (maze_limit(cat_x_box,cat_y_box,3) == false)) { //move up
-			cat_dx_box = 0;
-			cat_dy_box = -1;
-		} else if (cat_random_direction == 3) {
-			cat_dx_box = 0;
-			cat_dy_box = 0;
-			change_direction = true;
-		} else if ((cat_random_direction == 4) && (cat_y_box <= 219) && (maze_limit(cat_x_box,cat_y_box,4) == false)) { //move down
-			cat_dx_box = 0;
-			cat_dy_box = 1;
-		} else if (cat_random_direction == 4){
-			cat_dx_box = 0;
-			cat_dy_box = 0;
-			change_direction = true;
-		}
+	//update location of the cat
+	if ((cat_random_direction == 1) && (cat_x_box > 41) && (maze_limit(cat_x_box,cat_y_box,1) == false)) { //move left
+	    cat_dx_box = -1;
+	    cat_dy_box = 0;
+	} else if (cat_random_direction == 1) {
+	    cat_dx_box = 0;
+	    cat_dy_box = 0;
+	    change_direction = true;
+	} else if ((cat_random_direction == 2) && (cat_x_box <= 260) && (maze_limit(cat_x_box,cat_y_box,2) == false)) { //move right
+	    cat_dx_box = 1;
+	    cat_dy_box = 0;
+	} else if (cat_random_direction == 2) {
+	    cat_dx_box = 0;
+	    cat_dy_box = 0;
+	    change_direction = true;
+	} else if ((cat_random_direction == 3) && (cat_y_box > 2) && (maze_limit(cat_x_box,cat_y_box,3) == false)) { //move up
+	    cat_dx_box = 0;
+	    cat_dy_box = -1;
+	} else if (cat_random_direction == 3) {
+	    cat_dx_box = 0;
+	    cat_dy_box = 0;
+	    change_direction = true;
+	} else if ((cat_random_direction == 4) && (cat_y_box <= 219) && (maze_limit(cat_x_box,cat_y_box,4) == false)) { //move down
+	    cat_dx_box = 0;
+	    cat_dy_box = 1;
+	} else if (cat_random_direction == 4){
+	    cat_dx_box = 0;
+	    cat_dy_box = 0;
+	    change_direction = true;
+	}
 			
-		if ((change_direction == true) && (cat_random_direction == 1)) {
-			int numbers[] = {2,3,4};
-			cat_random_direction = numbers[rand()%3];
-			change_direction = false;
-		} else if ((change_direction == true) && (cat_random_direction == 2)) {
-			int numbers[] = {1,3,4};
-			cat_random_direction = numbers[rand()%3];
-			change_direction = false;
-		} else if ((change_direction == true) && (cat_random_direction == 3)) {
-			int numbers[] = {1,2,4};
-			cat_random_direction = numbers[rand()%3];
-			change_direction = false;
-		} else if ((change_direction == true) && (cat_random_direction == 4)) {
-			int numbers[] = {1,2,3};
-			cat_random_direction = numbers[rand()%3];
-			change_direction = false;
-		}
+	if ((change_direction == true) && (cat_random_direction == 1)) {
+	    int numbers[] = {2,3,4};
+	    cat_random_direction = numbers[rand()%3];
+	    change_direction = false;
+	} else if ((change_direction == true) && (cat_random_direction == 2)) {
+	    int numbers[] = {1,3,4};
+	    cat_random_direction = numbers[rand()%3];
+	    change_direction = false;
+	} else if ((change_direction == true) && (cat_random_direction == 3)) {
+	    int numbers[] = {1,2,4};
+	    cat_random_direction = numbers[rand()%3];
+	    change_direction = false;
+	} else if ((change_direction == true) && (cat_random_direction == 4)) {
+	    int numbers[] = {1,2,3};
+	    cat_random_direction = numbers[rand()%3];
+	    change_direction = false;
+	}
 		
-		cat_old_x_box = cat_x_box;
-		cat_old_y_box = cat_y_box;
-		cat_x_box+=cat_dx_box;
-		cat_y_box+=cat_dy_box;
+	cat_old_x_box = cat_x_box;
+	cat_old_y_box = cat_y_box;
+	cat_x_box+=cat_dx_box;
+	cat_y_box+=cat_dy_box;
 		
-		//check to see if mouse made it to the cheese (win)
-		for (int i = 300; i<320; i++) {
-			if ((x_box == i) && (y_box == 113)){
-				level_one = true;
-				continue;
-			}
-		}
+	//check to see if mouse made it to the cheese (win)
+	for (int i = 300; i<320; i++) {
+	    if ((x_box == i) && (y_box == 113)){
+	        level_one = true;
+		continue;
+	    }
+	}
 		
-		//check to see if cat caught mouse
-		bool cat_caught_mouse = false;
-		if( ((y_box>=cat_y_box && y_box<=cat_y_box+20)||(y_box+20>=cat_y_box && y_box+20<=cat_y_box+20))//mouse hits the cat on the left or right
+	//check to see if cat caught mouse
+	bool cat_caught_mouse = false;
+	if( ((y_box>=cat_y_box && y_box<=cat_y_box+20)||(y_box+20>=cat_y_box && y_box+20<=cat_y_box+20)) //mouse hits the cat on the left or right
 		    &&((x_box == cat_x_box+20)||(x_box+20 == cat_x_box))){
-			cat_caught_mouse = true;	
-		}
-		if( ((x_box>=cat_x_box && x_box<=cat_x_box+20)||(x_box+20>=cat_x_box && x_box+20<=cat_x_box+20))//mouse hits the cat on the top or bottom
-			&&((y_box+20 == cat_y_box)||(y_box == cat_y_box+20))){
-			cat_caught_mouse = true;
-		}
+	    cat_caught_mouse = true;	
+	}
+	if( ((x_box>=cat_x_box && x_box<=cat_x_box+20)||(x_box+20>=cat_x_box && x_box+20<=cat_x_box+20)) //mouse hits the cat on the top or bottom
+	    &&((y_box+20 == cat_y_box)||(y_box == cat_y_box+20))){
+	    cat_caught_mouse = true;
+	}
 		
-		//check to see if time is out
-		bool check_time = false;
-		clock_t difference = (int)clock - before; 				//measure how much time passed in the while loop
-		int msec_increase = difference / CLOCKS_PER_SEC;
-		msec = msec + msec_increase; 						//update milliseconds count since game started
-		if (msec >= 3000){
-			msec = 0;
-			check_time = count_down_timer();
-		}
+	//check to see if time is out
+	bool check_time = false;
+	clock_t difference = (int)clock - before; //measure how much time passed in the while loop
+	int msec_increase = difference / CLOCKS_PER_SEC;
+	msec = msec + msec_increase; //update milliseconds count since game started
+	if (msec >= 3000){
+	    msec = 0;
+	    check_time = count_down_timer();
+	}
 		
-		//restart the game if any of the two conditions is true
-		if (check_time || cat_caught_mouse){
-			if(cat_caught_mouse){
-				cat_caught_mouse_screen();
-			}else{
-				time_up_screen();
-			}
-			wait_for_vsync(); //swap front and back buffers on VGA vertical sync
-			pixel_buffer_start = *(pixel_ctrl_ptr + 1); //new back buffer
-			start_game = false;
-			KEY_value = *KEY_ptr;
-			while (!start_game) {
-				KEY_value = *KEY_ptr;
-				if (KEY_value == 0x4) {
-					start_game = true;
-				}
-			}
-			game_screen();
-			srand(time(NULL));		//initialize the maze
-			dfs(0, 0); map(); 		//plot maze
-			draw_entrance_exit();
-			wait_for_vsync();
-			pixel_buffer_start = *(pixel_ctrl_ptr + 1);
-			game_screen(); map();	//plot maze
-			draw_entrance_exit();
-			//initialize mouse position
-			dx_box = 0; dy_box = 0; x_box = 0; y_box = 120; 
-			old_x_box = x_box; old_y_box = y_box;
-			//initialize cat position
-			cat_random_direction = 3;
-			change_direction = false;
-			cat_dx_box = 0; cat_dy_box = 0; cat_x_box = 42; cat_y_box = 2;
-			cat_old_x_box = cat_x_box; cat_old_y_box = cat_y_box;
-			//initialize global variables again for level 1 timer
-			minutes = 2; seconds = 30; msec = 0;
-			//bool hex_display_on = count_down_timer();
-		}	
+	//restart the game if any of the two conditions is true
+	if (check_time || cat_caught_mouse){
+	    if(cat_caught_mouse){
+	        cat_caught_mouse_screen();
+	    }else{
+	        time_up_screen();
+	    }
+	    wait_for_vsync(); //swap front and back buffers on VGA vertical sync
+	    pixel_buffer_start = *(pixel_ctrl_ptr + 1); //new back buffer
+	    start_game = false;
+	    KEY_value = *KEY_ptr;
+	    while (!start_game) {
+	        KEY_value = *KEY_ptr;
+	        if (KEY_value == 0x4) {
+	            start_game = true;
+	        }
+	    }
+	    game_screen();
+	    srand(time(NULL)); //initialize the maze
+	    dfs(0, 0); map(); //plot maze
+	    draw_entrance_exit();
+	    wait_for_vsync();
+	    pixel_buffer_start = *(pixel_ctrl_ptr + 1);
+	    game_screen(); map();	//plot maze
+	    draw_entrance_exit();
+  
+	    //initialize mouse position
+	    dx_box = 0; dy_box = 0; x_box = 0; y_box = 120; 
+	    old_x_box = x_box; old_y_box = y_box;
+
+	    //initialize cat position
+	    cat_random_direction = 3;
+	    change_direction = false;
+	    cat_dx_box = 0; cat_dy_box = 0; cat_x_box = 42; cat_y_box = 2;
+	    cat_old_x_box = cat_x_box; cat_old_y_box = cat_y_box;
+
+	    //initialize global variables again for level 1 timer
+	    minutes = 2; seconds = 30; msec = 0;
+	    //bool hex_display_on = count_down_timer();
+	}	
         wait_for_vsync(); //swap front and back buffers on VGA vertical sync
         pixel_buffer_start = *(pixel_ctrl_ptr + 1); //new back buffer
     }
 	
-	level_one_win_screen();
+    level_one_win_screen();
 	
-	wait_for_vsync();
+    wait_for_vsync();
     pixel_buffer_start = *(pixel_ctrl_ptr + 1);
     
-	//reset mouse position
-	dx_box = 0; dy_box = 0; x_box = 0; y_box = 120;
-	old_x_box = x_box; old_y_box = y_box;
+    //reset mouse position
+    dx_box = 0; dy_box = 0; x_box = 0; y_box = 120;
+    old_x_box = x_box; old_y_box = y_box;
 	
-	//reset cat position
-	cat_random_direction = 3;
-	change_direction = false;
-	cat_dx_box = 0; cat_dy_box = 0; cat_x_box = 42; cat_y_box = 2;
-	cat_old_x_box = cat_x_box; cat_old_y_box = cat_y_box;
+    //reset cat position
+    cat_random_direction = 3;
+    change_direction = false;
+    cat_dx_box = 0; cat_dy_box = 0; cat_x_box = 42; cat_y_box = 2;
+    cat_old_x_box = cat_x_box; cat_old_y_box = cat_y_box;
 	
-	KEY_value = *KEY_ptr;
-	while (!start_level_two) {
-		KEY_value = *KEY_ptr;
-		if (KEY_value == 0x2) {
-			start_level_two = true;
-			break;
-		}
+    KEY_value = *KEY_ptr;
+    while (!start_level_two) {
+        KEY_value = *KEY_ptr;
+        if (KEY_value == 0x2) {
+	    start_level_two = true;
+	    break;
+	}
+    }
+	
+    game_screen();
+    //initialize the maze
+    srand(time(NULL));
+    dfs(0, 0);
+    //plot maze
+    map();
+    draw_entrance_exit();
+	
+    wait_for_vsync();
+    pixel_buffer_start = *(pixel_ctrl_ptr + 1);
+    game_screen();
+    //plot maze
+    map();
+    draw_entrance_exit();
+	
+    //initialize global variables for level 1 timer
+    minutes = 1;
+    seconds = 30;
+    msec = 0;
+    hex_display_on = count_down_timer();
+	
+    //start timer
+    clock_t before_level_two = clock();
+    while (!level_two) {
+		
+        clear_old_box(old_x_box, old_y_box);
+	clear_old_box(cat_old_x_box, cat_old_y_box);
+		
+	*LED_ptr = 2;
+		
+	SW_value = *SW_ptr;
+		
+	map();
+	draw_entrance_exit();
+			
+	draw_mouse(x_box, y_box);
+	draw_cat(cat_x_box, cat_y_box);
+		
+	//update location of the mouse
+	if ((SW_value == 0x1) && (x_box > 0) && (maze_limit(x_box,y_box,1) == false)) { //move left
+	    dx_box = -1;
+	    dy_box = 0;
+	} else if ((SW_value == 0x2) && (x_box <= 299) && (maze_limit(x_box,y_box,2) == false)) { //move right
+	    dx_box = 1;
+	    dy_box = 0;
+	} else if ((SW_value == 0x4) && (y_box > 0) && (maze_limit(x_box,y_box,3) == false)) { //move up
+	    dx_box = 0;
+	    dy_box = -1;
+	} else if ((SW_value == 0x8) && (y_box <= 219) && (maze_limit(x_box,y_box,4) == false)) { //move down
+	    dx_box = 0;
+	    dy_box = 1;
+	} else {
+	    dx_box = 0;
+	    dy_box = 0;
+	}
+				   
+	old_x_box = x_box;
+	old_y_box = y_box;	
+	x_box+=dx_box;
+	y_box+=dy_box;
+		
+	//update location of the cat
+	if ((cat_random_direction == 1) && (cat_x_box > 41) && (maze_limit(cat_x_box,cat_y_box,1) == false)) { //move left
+	    cat_dx_box = -1;
+	    cat_dy_box = 0;
+	} else if (cat_random_direction == 1) {
+	    cat_dx_box = 0;
+  	    cat_dy_box = 0;
+	    change_direction = true;
+	} else if ((cat_random_direction == 2) && (cat_x_box <= 260) && (maze_limit(cat_x_box,cat_y_box,2) == false)) { //move right
+	    cat_dx_box = 1;
+	    cat_dy_box = 0;
+	} else if (cat_random_direction == 2) {
+	    cat_dx_box = 0;
+	    cat_dy_box = 0;
+	    change_direction = true;
+	} else if ((cat_random_direction == 3) && (cat_y_box > 2) && (maze_limit(cat_x_box,cat_y_box,3) == false)) { //move up
+	    cat_dx_box = 0;
+	    cat_dy_box = -1;
+	} else if (cat_random_direction == 3) {
+	    cat_dx_box = 0;
+	    cat_dy_box = 0;
+	    change_direction = true;
+	} else if ((cat_random_direction == 4) && (cat_y_box <= 219) && (maze_limit(cat_x_box,cat_y_box,4) == false)) { //move down
+	    cat_dx_box = 0;
+	    cat_dy_box = 1;
+	} else if (cat_random_direction == 4){
+	    cat_dx_box = 0;
+	    cat_dy_box = 0;
+	    change_direction = true;
+	}
+			
+	if ((change_direction == true) && (cat_random_direction == 1)) {
+	    int numbers[] = {2,3,4};
+	    cat_random_direction = numbers[rand()%3];
+	    change_direction = false;
+	} else if ((change_direction == true) && (cat_random_direction == 2)) {
+	    int numbers[] = {1,3,4};
+	    cat_random_direction = numbers[rand()%3];
+	    change_direction = false;
+	} else if ((change_direction == true) && (cat_random_direction == 3)) {
+	    int numbers[] = {1,2,4};
+	    cat_random_direction = numbers[rand()%3];
+	    change_direction = false;
+	} else if ((change_direction == true) && (cat_random_direction == 4)) {
+	    int numbers[] = {1,2,3};
+	    cat_random_direction = numbers[rand()%3];
+	    change_direction = false;
+	}
+
+	cat_old_x_box = cat_x_box;
+	cat_old_y_box = cat_y_box;	
+	cat_x_box+=cat_dx_box;
+	cat_y_box+=cat_dy_box;
+		
+	//check to see if mouse made it to the cheese (win)
+	for (int i = 300; i<320; i++) {
+	    if ((x_box == i) && (y_box == 113)){
+	        level_two = true;
+	    }
 	}
 	
-	game_screen();
-	//initialize the maze
-	srand(time(NULL));
-    dfs(0, 0);
-	//plot maze
-	map();
-	draw_entrance_exit();
-	
-	wait_for_vsync();
-	pixel_buffer_start = *(pixel_ctrl_ptr + 1);
-	game_screen();
-	//plot maze
-	map();
-	draw_entrance_exit();
-	
-	//initialize global variables for level 1 timer
-	minutes = 1;
-	seconds = 30;
-	msec = 0;
-	hex_display_on = count_down_timer();
-	
-	//start timer
-	clock_t before_level_two = clock();
-	while (!level_two) {
-		
-		clear_old_box(old_x_box, old_y_box);
-		clear_old_box(cat_old_x_box, cat_old_y_box);
-		
-		*LED_ptr = 2;
-		
-		SW_value = *SW_ptr;
-		
-		map();
-	    draw_entrance_exit();
-			
-		draw_mouse(x_box, y_box);
-		draw_cat(cat_x_box, cat_y_box);
-		
-		//update location of the mouse
-		if ((SW_value == 0x1) && (x_box > 0) && (maze_limit(x_box,y_box,1) == false)) { //move left
-			dx_box = -1;
-			dy_box = 0;
-		} else if ((SW_value == 0x2) && (x_box <= 299) && (maze_limit(x_box,y_box,2) == false)) { //move right
-			dx_box = 1;
-			dy_box = 0;
-		} else if ((SW_value == 0x4) && (y_box > 0) && (maze_limit(x_box,y_box,3) == false)) { //move up
-			dx_box = 0;
-			dy_box = -1;
-		} else if ((SW_value == 0x8) && (y_box <= 219) && (maze_limit(x_box,y_box,4) == false)) { //move down
-			dx_box = 0;
-			dy_box = 1;
-		} else {
-			dx_box = 0;
-			dy_box = 0;
-		}
-				   
-		old_x_box = x_box;
-		old_y_box = y_box;	
-		x_box+=dx_box;
-		y_box+=dy_box;
-		
-		//update location of the cat
-		if ((cat_random_direction == 1) && (cat_x_box > 41) && (maze_limit(cat_x_box,cat_y_box,1) == false)) { //move left
-			cat_dx_box = -1;
-			cat_dy_box = 0;
-		} else if (cat_random_direction == 1) {
-			cat_dx_box = 0;
-			cat_dy_box = 0;
-			change_direction = true;
-		} else if ((cat_random_direction == 2) && (cat_x_box <= 260) && (maze_limit(cat_x_box,cat_y_box,2) == false)) { //move right
-			cat_dx_box = 1;
-			cat_dy_box = 0;
-		} else if (cat_random_direction == 2) {
-			cat_dx_box = 0;
-			cat_dy_box = 0;
-			change_direction = true;
-		} else if ((cat_random_direction == 3) && (cat_y_box > 2) && (maze_limit(cat_x_box,cat_y_box,3) == false)) { //move up
-			cat_dx_box = 0;
-			cat_dy_box = -1;
-		} else if (cat_random_direction == 3) {
-			cat_dx_box = 0;
-			cat_dy_box = 0;
-			change_direction = true;
-		} else if ((cat_random_direction == 4) && (cat_y_box <= 219) && (maze_limit(cat_x_box,cat_y_box,4) == false)) { //move down
-			cat_dx_box = 0;
-			cat_dy_box = 1;
-		} else if (cat_random_direction == 4){
-			cat_dx_box = 0;
-			cat_dy_box = 0;
-			change_direction = true;
-		}
-			
-		if ((change_direction == true) && (cat_random_direction == 1)) {
-			int numbers[] = {2,3,4};
-			cat_random_direction = numbers[rand()%3];
-			change_direction = false;
-		} else if ((change_direction == true) && (cat_random_direction == 2)) {
-			int numbers[] = {1,3,4};
-			cat_random_direction = numbers[rand()%3];
-			change_direction = false;
-		} else if ((change_direction == true) && (cat_random_direction == 3)) {
-			int numbers[] = {1,2,4};
-			cat_random_direction = numbers[rand()%3];
-			change_direction = false;
-		} else if ((change_direction == true) && (cat_random_direction == 4)) {
-			int numbers[] = {1,2,3};
-			cat_random_direction = numbers[rand()%3];
-			change_direction = false;
-		}
-
-		cat_old_x_box = cat_x_box;
-		cat_old_y_box = cat_y_box;	
-		cat_x_box+=cat_dx_box;
-		cat_y_box+=cat_dy_box;
-		
-		//check to see if mouse made it to the cheese (win)
-		for (int i = 300; i<320; i++) {
-			if ((x_box == i) && (y_box == 113)){
-				level_two = true;
-			}
-		}
-		//check to see if cat caught mouse
-		bool cat_caught_mouse = false;
-		if( ((y_box>=cat_y_box && y_box<=cat_y_box+20)||(y_box+20>=cat_y_box && y_box+20<=cat_y_box+20))//mouse hits the cat on the left or right
+        //check to see if cat caught mouse
+	bool cat_caught_mouse = false;
+	if( ((y_box>=cat_y_box && y_box<=cat_y_box+20)||(y_box+20>=cat_y_box && y_box+20<=cat_y_box+20))//mouse hits the cat on the left or right
 		    &&((x_box == cat_x_box+20)||(x_box+20 == cat_x_box))){
-			cat_caught_mouse = true;	
-		}
-		if( ((x_box>=cat_x_box && x_box<=cat_x_box+20)||(x_box+20>=cat_x_box && x_box+20<=cat_x_box+20))//mouse hits the cat on the top or bottom
+	    cat_caught_mouse = true;	
+	}
+	if( ((x_box>=cat_x_box && x_box<=cat_x_box+20)||(x_box+20>=cat_x_box && x_box+20<=cat_x_box+20))//mouse hits the cat on the top or bottom
 			&&((y_box+20 == cat_y_box)||(y_box == cat_y_box+20))){
-			cat_caught_mouse = true;
-		}
+	    cat_caught_mouse = true;
+	}
 		
-		//check to see if time is out
-		bool check_time = false;
-		clock_t difference = (int)clock - before_level_two; 				//measure how much time passed in the while loop
-		int msec_increase = difference / CLOCKS_PER_SEC;
-		msec = msec + msec_increase; 						//update milliseconds count since game started
-		if (msec_increase >= 3000){
-			msec = 0;
-			check_time = count_down_timer();
-		}
+	//check to see if time is out
+	bool check_time = false;
+	clock_t difference = (int)clock - before_level_two; //measure how much time passed in the while loop
+	int msec_increase = difference / CLOCKS_PER_SEC;
+	msec = msec + msec_increase; //update milliseconds count since game started
+	if (msec_increase >= 3000){
+	    msec = 0;
+	    check_time = count_down_timer();
+	}
 		
-		//restart the game if any of the two conditions is true
-		if (check_time || cat_caught_mouse){
-			if(cat_caught_mouse){
-				cat_caught_mouse_screen();
-			}else{
-				time_up_screen();
-			}
-			wait_for_vsync(); //swap front and back buffers on VGA vertical sync
-			pixel_buffer_start = *(pixel_ctrl_ptr + 1); //new back buffer
-			start_game = false;
-			KEY_value = *KEY_ptr;
-			while (!start_game) {
-				KEY_value = *KEY_ptr;
-				if (KEY_value == 0x4) {
-					start_game = true;
-				}
-			}
-			game_screen();
-			srand(time(NULL));		//initialize the maze
-			dfs(0, 0); map(); 		//plot maze
-			draw_entrance_exit();
-			wait_for_vsync();
-			pixel_buffer_start = *(pixel_ctrl_ptr + 1);
-			game_screen(); map();	//plot maze
-			draw_entrance_exit();
-			//initialize mouse position
-			dx_box = 0; dy_box = 0; x_box = 0; y_box = 120; 
-			old_x_box = x_box; old_y_box = y_box;
-			//initialize cat position
-			cat_random_direction = 3;
-			change_direction = false;
-			cat_dx_box = 0; cat_dy_box = 0; cat_x_box = 42; cat_y_box = 2;
-			cat_old_x_box = cat_x_box; cat_old_y_box = cat_y_box;
-			//initialize global variables again for level 1 timer
-			minutes = 2; seconds = 30; msec = 0;
-			//bool hex_display_on = count_down_timer();
-		}	
+	//restart the game if any of the two conditions is true
+	if (check_time || cat_caught_mouse){
+	    if(cat_caught_mouse){
+	        cat_caught_mouse_screen();
+	    }else{
+	        time_up_screen();
+	    }
+	    wait_for_vsync(); //swap front and back buffers on VGA vertical sync
+	    pixel_buffer_start = *(pixel_ctrl_ptr + 1); //new back buffer
+	    start_game = false;
+	    KEY_value = *KEY_ptr;
+
+	    while (!start_game) {
+	        KEY_value = *KEY_ptr;
+		if (KEY_value == 0x4) {
+		    start_game = true;
+		}
+	    }
+
+	    game_screen();
+            srand(time(NULL)); //initialize the maze
+	    dfs(0, 0); map(); //plot maze
+	    draw_entrance_exit();
+	    wait_for_vsync();
+	    pixel_buffer_start = *(pixel_ctrl_ptr + 1);
+	    game_screen(); map(); //plot maze
+	    draw_entrance_exit();
+
+	    //initialize mouse position
+	    dx_box = 0; dy_box = 0; x_box = 0; y_box = 120; 
+	    old_x_box = x_box; old_y_box = y_box;
+
+	    //initialize cat position
+	    cat_random_direction = 3;
+	    change_direction = false;
+	    cat_dx_box = 0; cat_dy_box = 0; cat_x_box = 42; cat_y_box = 2;
+	    cat_old_x_box = cat_x_box; cat_old_y_box = cat_y_box;
+
+	    //initialize global variables again for level 1 timer
+	    minutes = 2; seconds = 30; msec = 0;
+	    //bool hex_display_on = count_down_timer();
+	}
+	
         wait_for_vsync();
         pixel_buffer_start = *(pixel_ctrl_ptr + 1);
-	}
-	game_over_screen();
-	wait_for_vsync();
-	pixel_buffer_start = *(pixel_ctrl_ptr + 1);
+    }
+    game_over_screen();
+    wait_for_vsync();
+    pixel_buffer_start = *(pixel_ctrl_ptr + 1);
     game_over_screen();
 }
 
