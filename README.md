@@ -1,7 +1,7 @@
 # Cat and Mouse Game
 
 The following image is a screenshot of the game simulated on CPUlator:
-![alt text](https://github.com/casseyshao/Cat_Mouse_Game/blob/main/game_screenshot.png | width=500)
+![alt text](https://github.com/casseyshao/Cat_Mouse_Game/blob/main/game_screenshot.png=500x656)
 
 This project was completed by Valentina and I.
 It is played on the DE1-SoC board.
