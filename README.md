@@ -1,4 +1,4 @@
-# cat_and_mouse_game
+# Cat and Mouse Game
 
 This project was completed by Valentina and I.
 It is played on the DE1-SoC board.
