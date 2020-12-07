@@ -2,7 +2,7 @@
 
 The following image is a screenshot of the game simulated on CPUlator:
 
-<img src="https://github.com/casseyshao/Cat_Mouse_Game/blob/main/game_screenshot.png" data-canonical-src="https://github.com/casseyshao/Cat_Mouse_Game/blob/main/game_screenshot.png" width="500" height="656" />
+<img src="https://github.com/casseyshao/Cat_Mouse_Game/blob/main/game_screenshot.png" data-canonical-src="https://github.com/casseyshao/Cat_Mouse_Game/blob/main/game_screenshot.png" width="450" height="590"/>
 
 This project was completed by Valentina and I.
 It is played on the DE1-SoC board.
