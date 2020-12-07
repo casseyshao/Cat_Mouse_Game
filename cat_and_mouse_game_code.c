@@ -10,13 +10,13 @@ the time on the seven-segment HEX displays run out or the cat catches you.
 #include <stdio.h>
 #include "visuals.h"
 
-//global variable declarations
+/*global variable declarations*/
 volatile int pixel_buffer_start;
 
 //for the maze:
 enum {
-    W = 10,         // width of maze (# of cells)
-    H = 10          // height of maze cell (# of cells)
+    W = 10, //width of maze (# of cells)
+    H = 10 //height of maze cell (# of cells)
 };
 enum {
     North,
@@ -26,17 +26,17 @@ enum {
     NDir
 }; 
 char visited[H][W];
-char horz[H][W - 1];        // horizontal E-W paths in the maze
-char vert[H - 1][W];        // veritcal N-S paths in the maze
+char horz[H][W - 1]; //horizontal E-W paths in the maze
+char vert[H - 1][W]; //veritcal N-S paths in the maze
 int shift = 24;
 
-//timer global variable
+//for the timer:
 int minutes = 0;
 int seconds = 0;
 int msec = 0;
 
-//function declarations
-void clear_screen(); //so far no use
+/*function declarations*/
+void clear_screen(); //not used
 void start_screen();
 void game_screen();
 void level_one_win_screen();
@@ -51,11 +51,11 @@ void swap(int *x, int *y); //so far no use
 void clear_old_box(int x, int y);
 bool maze_limit(int x, int y, int direction_value);
 
-//functions for timer
+//for the timer:
 bool count_down_timer();
 void display_sub(int min, int sec);
 
-//functions for maze
+//for the maze:
 int adjacent(int dir[], int x, int y);
 void dfs(int x, int y);
 void map(void);
@@ -528,37 +528,36 @@ int main(void)
     game_over_screen();
 }
 
-//function definitions
-//for the timer
+//for the timer:
 bool count_down_timer() {
-	if (minutes > 0 || seconds >= 0) {
-		//display count
-		display_sub(minutes, seconds);
-		//decrement seconds count
-		if(minutes > 0 && seconds <= 0) {
-			minutes --;
-			seconds = 59;
-		} else {
-			seconds --;
-		}
-		return false;
-	}else{
-		return true; //Time's over when exit while loop
+    if (minutes > 0 || seconds >= 0) {
+        //display count
+	display_sub(minutes, seconds);
+	//decrement seconds count
+	if(minutes > 0 && seconds <= 0) {
+	    minutes --;
+	    seconds = 59;
+	} else {
+	    seconds --;
 	}
+	return false;
+    }else{
+	return true; //Time's over when exit while loop
+    }
 }
 
 void display_sub(int min, int sec) {
-	char seg7[] = {0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07, 0x7F, 0x6F};
-	volatile int *HEX_ptr = (int *)0xFF200020;
+    char seg7[] = {0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07, 0x7F, 0x6F};
+    volatile int *HEX_ptr = (int *)0xFF200020;
 	
-	//Display time left
-	//HEX3-2 for minutes (MM), HEX1-0 for seconds (SS)
-	int hex0_sec1 = sec % 10;
-	int hex1_sec2 = (sec - (sec % 10)) / 10;
-	int hex2_min1 = min % 10;
-	int hex3_min2 =	(min - (min % 10)) / 10;
+    //Display time left
+    //HEX3-2 for minutes (MM), HEX1-0 for seconds (SS)
+    int hex0_sec1 = sec % 10;
+    int hex1_sec2 = (sec - (sec % 10)) / 10;
+    int hex2_min1 = min % 10;
+    int hex3_min2 = (min - (min % 10)) / 10;
 	
-	*HEX_ptr = seg7[hex0_sec1] | seg7[hex1_sec2] << 8 | seg7[hex2_min1] << 16 | seg7[hex3_min2] << 24;
+    *HEX_ptr = seg7[hex0_sec1] | seg7[hex1_sec2] << 8 | seg7[hex2_min1] << 16 | seg7[hex3_min2] << 24;
 }
 
 //for the maze:
@@ -592,16 +591,15 @@ void dfs(int x, int y) {
             case South: vert[y][x] = 1;  	dfs(x, y + 1); break;
             case West:  horz[y][x - 1] = 1; dfs(x - 1, y); break;
         }
- 
         ndir = adjacent(dir, x, y);
     }
 }
  
 //Print a map of the maze
 void map(void) {	
-	int pos_x = 40;
-	int pos_y = 0;
-	int i, j;
+    int pos_x = 40;
+    int pos_y = 0;
+    int i, j;
  
     for (i = 40; i < 280; i = i + shift) {
         plot_H_dash(i, pos_y, 0xFFFF); //putchar('_'); 
@@ -615,161 +613,162 @@ void map(void) {
  
         for (i = 0; i < W; i++) {
             //putchar(j < H - 1 && vert[j][i] ? ' ' : '_');
-			pos_x = 40 + shift*i;
-			if(j < H - 1 && vert[j][i]){
-				plot_H_dash(pos_x, pos_y, 0x0000);
-			}else{
-				plot_H_dash(pos_x, pos_y, 0xFFFF);
-			}
-			pos_x = pos_x + shift;
+	    pos_x = 40 + shift*i;
+	    if(j < H - 1 && vert[j][i]){
+	        plot_H_dash(pos_x, pos_y, 0x0000);
+	    }else{
+		plot_H_dash(pos_x, pos_y, 0xFFFF);
+	    }
+	    pos_x = pos_x + shift;
+            
             //putchar(i < W - 1 && horz[j][i] ? '_' : '|');
-			if(i < W - 1 && horz[j][i]){
-				plot_H_dash(pos_x, pos_y, 0xFFFF);
-			}else{
-				plot_V_dash(pos_x, pos_y);
-			}
+	    if(i < W - 1 && horz[j][i]){
+	        plot_H_dash(pos_x, pos_y, 0xFFFF);
+	    }else{
+		plot_V_dash(pos_x, pos_y);
+	    }
         }
-		pos_x = 40;
+	pos_x = 40;
         pos_y = pos_y + shift;//putchar('\n');
     }
 }
 
 void plot_H_dash(int x, int y, short int color) {
-	for(int i = x; i < x + shift; i++){
-		plot_pixel(i, y, color); //can be white or black
-	}
+    for(int i = x; i < x + shift; i++){
+        plot_pixel(i, y, color); //can be white or black
+    }
 }
 
 void plot_V_dash(int x, int y) {
-	for(int i = y; i > y - shift; i--){
-		plot_pixel(x, i, 0xFFFF); //white
-	}
+    for(int i = y; i > y - shift; i--){
+	plot_pixel(x, i, 0xFFFF); //white
+    }
 }
 
 void draw_entrance_exit() {
-	//entrace
-	for(int y = 90; y < 150; y++){
-		plot_pixel(40, y, 0x0000);
-	}
-	//exit
-	for(int y = 90; y < 150; y++){
-		plot_pixel(280, y, 0x0000); //black
-	}
+    //entrace
+    for(int y = 90; y < 150; y++){
+	plot_pixel(40, y, 0x0000);
+    }
+    //exit
+    for(int y = 90; y < 150; y++){
+        plot_pixel(280, y, 0x0000); //black
+    }
 }
 
-// Colors every pixel black from top left corner to bottom right corner
+//Colors every pixel black from top left corner to bottom right corner
 void clear_screen() {
-	for (int y = 0; y < 240; ++y) {
-		for (int x = 0; x < 320; ++x) {
-			plot_pixel(x,y,0x0000);
-		}
+    for (int y = 0; y < 240; ++y) {
+	for (int x = 0; x < 320; ++x) {
+	    plot_pixel(x,y,0x0000);
 	}
+    }
 }
 //end maze functions
 
 void start_screen() {
 	
-	int i = 0, j = 0;
+    int i = 0, j = 0;
 	
-	for (int k = 0; k<320*2*240-1; k+=2) {
-		int red = ((start_screen_color[k+1]&0xF8)>>3)<<11;
-		int green = (((start_screen_color[k]&0xE0)>>5)|((start_screen_color[k+1]&0x7)<<3));
-	    int blue = (start_screen_color[k]&0x1F);
+    for (int k = 0; k<320*2*240-1; k+=2) {
+        int red = ((start_screen_color[k+1]&0xF8)>>3)<<11;
+        int green = (((start_screen_color[k]&0xE0)>>5)|((start_screen_color[k+1]&0x7)<<3));
+        int blue = (start_screen_color[k]&0x1F);
 		
-		short int screen_pixel_color = red|((green<<5)|blue);
+	short int screen_pixel_color = red|((green<<5)|blue);
 		
-		plot_pixel(i,j,screen_pixel_color);
-		//plot_pixel(i,j,0xFFFF);
-		i++;
-		if (i == 320) {
-			i=0;
-			j++;
-		}
+	plot_pixel(i,j,screen_pixel_color);
+	//plot_pixel(i,j,0xFFFF);
+	i++;
+	if (i == 320) {
+	    i=0;
+	    j++;
 	}
+    }
 }
 
 void game_screen() {
 	
-	int i = 0, j = 0;
+    int i = 0, j = 0;
 	
-	for (int k = 0; k<320*2*240-1; k+=2) {
-		int red = ((game_screen_color[k+1]&0xF8)>>3)<<11;
-		int green = (((game_screen_color[k]&0xE0)>>5)|((game_screen_color[k+1]&0x7)<<3));
-	    int blue = (game_screen_color[k]&0x1F);
+    for (int k = 0; k<320*2*240-1; k+=2) {
+        int red = ((game_screen_color[k+1]&0xF8)>>3)<<11;
+	int green = (((game_screen_color[k]&0xE0)>>5)|((game_screen_color[k+1]&0x7)<<3));
+	int blue = (game_screen_color[k]&0x1F);
 		
-		short int screen_pixel_color = red|((green<<5)|blue);
+	short int screen_pixel_color = red|((green<<5)|blue);
 		
-		plot_pixel(i,j,screen_pixel_color);
+	plot_pixel(i,j,screen_pixel_color);
 		
-		i++;
-		if (i == 320) {
-			i=0;
-			j++;
-		}
+	i++;
+	if (i == 320) {
+	    i=0;
+	    j++;
 	}
+    }
 }
 
 void level_one_win_screen() {
 	
     int i = 0, j = 0;
 	
-	for (int k = 0; k<320*2*240-1; k+=2) {
-		int red = ((lvl_one_win_color[k+1]&0xF8)>>3)<<11;
-		int green = (((lvl_one_win_color[k]&0xE0)>>5)|((lvl_one_win_color[k+1]&0x7)<<3));
-	    int blue = (lvl_one_win_color[k]&0x1F);
+    for (int k = 0; k<320*2*240-1; k+=2) {
+        int red = ((lvl_one_win_color[k+1]&0xF8)>>3)<<11;
+	int green = (((lvl_one_win_color[k]&0xE0)>>5)|((lvl_one_win_color[k+1]&0x7)<<3));
+	int blue = (lvl_one_win_color[k]&0x1F);
 		
-		short int lvl_one_win_pixel_color = red|((green<<5)|blue);
+	short int lvl_one_win_pixel_color = red|((green<<5)|blue);
 		
-		plot_pixel(i,j,lvl_one_win_pixel_color);
+	plot_pixel(i,j,lvl_one_win_pixel_color);
 		
-		i++;
-		if (i == 320) {
-			i=0;
-			j++;
-		}
+	i++;
+	if (i == 320) {
+	    i=0;
+	    j++;
 	}
+    }
 }
 
 void time_up_screen() {
 	
     int i = 0, j = 0;
 	
-	for (int k = 0; k<320*2*240-1; k+=2) {
-		int red = ((time_up_color[k+1]&0xF8)>>3)<<11;
-		int green = (((time_up_color[k]&0xE0)>>5)|((time_up_color[k+1]&0x7)<<3));
-	    int blue = (time_up_color[k]&0x1F);
+    for (int k = 0; k<320*2*240-1; k+=2) {
+        int red = ((time_up_color[k+1]&0xF8)>>3)<<11;
+	int green = (((time_up_color[k]&0xE0)>>5)|((time_up_color[k+1]&0x7)<<3));
+	int blue = (time_up_color[k]&0x1F);
 		
-		short int time_up_pixel_color = red|((green<<5)|blue);
+	short int time_up_pixel_color = red|((green<<5)|blue);
 		
-		plot_pixel(i,j,time_up_pixel_color);
+	plot_pixel(i,j,time_up_pixel_color);
 		
-		i++;
-		if (i == 320) {
-			i=0;
-			j++;
-		}
+	i++;
+	if (i == 320) {
+	    i=0;
+	    j++;
 	}
+    }
 }
 
 void cat_caught_mouse_screen() {
 	
     int i = 0, j = 0;
 	
-	for (int k = 0; k<320*2*240-1; k+=2) {
-		int red = ((cat_caught_mouse_color[k+1]&0xF8)>>3)<<11;
-		int green = (((cat_caught_mouse_color[k]&0xE0)>>5)|((cat_caught_mouse_color[k+1]&0x7)<<3));
-	    int blue = (cat_caught_mouse_color[k]&0x1F);
+    for (int k = 0; k<320*2*240-1; k+=2) {
+	int red = ((cat_caught_mouse_color[k+1]&0xF8)>>3)<<11;
+	int green = (((cat_caught_mouse_color[k]&0xE0)>>5)|((cat_caught_mouse_color[k+1]&0x7)<<3));
+	int blue = (cat_caught_mouse_color[k]&0x1F);
 		
-		short int cat_caught_mouse_pixel_color = red|((green<<5)|blue);
+	short int cat_caught_mouse_pixel_color = red|((green<<5)|blue);
 		
-		plot_pixel(i,j,cat_caught_mouse_pixel_color);
+	plot_pixel(i,j,cat_caught_mouse_pixel_color);
 		
-		i++;
-		if (i == 320) {
-			i=0;
-			j++;
-		}
+	i++;
+	if (i == 320) {
+	    i=0;
+	    j++;
 	}
+    }
 }
 
 
@@ -777,146 +776,147 @@ void game_over_screen() {
 	
     int i = 0, j = 0;
 	
-	for (int k = 0; k<320*2*240-1; k+=2) {
-		int red = ((game_over_color[k+1]&0xF8)>>3)<<11;
-		int green = (((game_over_color[k]&0xE0)>>5)|((game_over_color[k+1]&0x7)<<3));
-	    int blue = (game_over_color[k]&0x1F);
+    for (int k = 0; k<320*2*240-1; k+=2) {
+	int red = ((game_over_color[k+1]&0xF8)>>3)<<11;
+	int green = (((game_over_color[k]&0xE0)>>5)|((game_over_color[k+1]&0x7)<<3));
+	int blue = (game_over_color[k]&0x1F);
 		
-		short int game_over_pixel_color = red|((green<<5)|blue);
+	short int game_over_pixel_color = red|((green<<5)|blue);
 		
-		plot_pixel(i,j,game_over_pixel_color);
+	plot_pixel(i,j,game_over_pixel_color);
 		
-		i++;
-		if (i == 320) {
-			i=0;
-			j++;
-		}
+	i++;
+	if (i == 320) {
+	    i=0;
+	    j++;
 	}
+    }
 }
 
 void clear_old_box(int x, int y) {
-	if ((x>0)&&(y>0)) {
-	    for (int i = x-1; i < x+21; i++) {
-		    for (int j = y-1; j < y+21; j++) {
-			    plot_pixel(i,j,0x0000);
-		    }
-	    }
-	} else if ((x==0)&&(y>0)){
-		for (int i = x; i < x+21; i++) {
-		    for (int j = y-1; j < y+21; j++) {
-			    plot_pixel(i,j,0x0000);
-		    }
-	    }
-	} else if ((y==0)&&(x>0)){
-		for (int i = x-1; i < x+21; i++) {
-		    for (int j = y; j < y+21; j++) {
-			    plot_pixel(i,j,0x0000);
-		    }
-	    }
-	} else {
-		for (int i = x; i < x+21; i++) {
-		    for (int j = y; j < y+21; j++) {
-			    plot_pixel(i,j,0x0000);
-		    }
+    if ((x>0)&&(y>0)) {
+        for (int i = x-1; i < x+21; i++) {
+	    for (int j = y-1; j < y+21; j++) {
+		plot_pixel(i,j,0x0000);
+            }
+	}
+    } else if ((x==0)&&(y>0)){
+	for (int i = x; i < x+21; i++) {
+	    for (int j = y-1; j < y+21; j++) {
+		plot_pixel(i,j,0x0000);
 	    }
 	}
+    } else if ((y==0)&&(x>0)){
+	for (int i = x-1; i < x+21; i++) {
+	    for (int j = y; j < y+21; j++) {
+		plot_pixel(i,j,0x0000);
+	    }
+	}
+    } else {
+	for (int i = x; i < x+21; i++) {
+	    for (int j = y; j < y+21; j++) {
+		plot_pixel(i,j,0x0000);
+	    }
+	}
+    }
 }
 
 void wait_for_vsync() {
-	volatile int *pixel_ctrl_ptr = (int*)0xFF203020; // pixel controller
-	register int status;
+    volatile int *pixel_ctrl_ptr = (int*)0xFF203020; // pixel controller
+    register int status;
 	
-	*pixel_ctrl_ptr = 1; // start the synchronization process
+    *pixel_ctrl_ptr = 1; // start the synchronization process
 	
-	//wait for s to become 0 in status register
-	//of pixel buffer controller registers
-	status = *(pixel_ctrl_ptr+3);	
-	while ((status&0x01)!=0) {
-		status = *(pixel_ctrl_ptr+3);
-	}
+    //wait for s to become 0 in status register
+    //of pixel buffer controller registers
+    status = *(pixel_ctrl_ptr+3);	
+    while ((status&0x01)!=0) {
+	status = *(pixel_ctrl_ptr+3);
+    }
 }
 	
 void plot_pixel(int x, int y, short int line_color) {
     *(short int *)(pixel_buffer_start + (y << 10) + (x << 1)) = line_color;
 }
+
 //bool maze_limit(int x, int y, int direction_value);
 //direction value: 1 for left, 2 for right, 3 for up, 4 for down
 bool maze_limit(int x, int y, int direction_value) {
-	if (direction_value == 1) {
-		for (int i = y; i<y+20; i++) {
-			if (*(short int *)(0xC8000000 + (i << 10) + ((x-1) << 1)) != (short int)0x0000) {
-				return(true);
-			}
-		}
-	} else if (direction_value == 2) {
-		for (int i = y; i<y+20; i++) {
-			if (*(short int *)(0xC8000000 + (i << 10) + ((x+20) << 1)) != (short int)0x0000) {
-				return(true);
-			}
-		}
-	} else if (direction_value == 3) {
-		for (int j = x; j<x+20; j++) {
-			if (*(short int *)(0xC8000000 + ((y-1) << 10) + ((j) << 1)) != (short int)0x0000) {
-				return(true);
-			}
-		}
-	} else if (direction_value == 4) {
-		for (int j = x; j<x+20; j++) {
-			if (*(short int *)(0xC8000000 + ((y+20) << 10) + ((j) << 1)) != (short int)0x0000) {
-				return(true);
-			}
-		}
+    if (direction_value == 1) {
+	for (int i = y; i<y+20; i++) {
+	    if (*(short int *)(0xC8000000 + (i << 10) + ((x-1) << 1)) != (short int)0x0000) {
+	        return(true);
+	    }
 	}
-	return(false);
+    } else if (direction_value == 2) {
+	for (int i = y; i<y+20; i++) {
+	    if (*(short int *)(0xC8000000 + (i << 10) + ((x+20) << 1)) != (short int)0x0000) {
+	        return(true);
+	    }
+	}
+    } else if (direction_value == 3) {
+	for (int j = x; j<x+20; j++) {
+	    if (*(short int *)(0xC8000000 + ((y-1) << 10) + ((j) << 1)) != (short int)0x0000) {
+	        return(true);
+	    }
+	}
+    } else if (direction_value == 4) {
+	for (int j = x; j<x+20; j++) {
+	    if (*(short int *)(0xC8000000 + ((y+20) << 10) + ((j) << 1)) != (short int)0x0000) {
+	        return(true);
+	    }
+	}
+    }
+    return(false);
 }
 
 void draw_mouse(int x, int y) {
-	// draw a 20x20 box
+    // draw a 20x20 box
 	
-	//go through this
-	int i = x, j = y;
+    //go through this
+    int i = x, j = y;
 	
-	for (int k = 0; k<20*2*20-1; k+=2) {
-		int red = ((mouse_color[k+1]&0xF8)>>3)<<11;
-		int green = (((mouse_color[k]&0xE0)>>5)|((mouse_color[k+1]&0x7)<<3));
-	    int blue = (mouse_color[k]&0x1F);
+    for (int k = 0; k<20*2*20-1; k+=2) {
+	int red = ((mouse_color[k+1]&0xF8)>>3)<<11;
+	int green = (((mouse_color[k]&0xE0)>>5)|((mouse_color[k+1]&0x7)<<3));
+	int blue = (mouse_color[k]&0x1F);
 		
-		short int mouse_pixel_color = red|((green<<5)|blue);
+        short int mouse_pixel_color = red|((green<<5)|blue);
 		
-		plot_pixel(i,j,mouse_pixel_color);
-		i++;
-		if (i == x+20) {
-			i=x;
-			j++;
-		}
-	} 
+	plot_pixel(i,j,mouse_pixel_color);
+	i++;
+	if (i == x+20) {
+	    i=x;
+	    j++;
+	}
+    } 
 }
 
 void draw_cat(int x, int y) {
-	// draw a 20x20 box
+    // draw a 20x20 box
 	
-	//go through this
-	int i = x, j = y;
+    //go through this
+    int i = x, j = y;
 	
-	for (int k = 0; k<20*2*20-1; k+=2) {
-		int red = ((cat_color[k+1]&0xF8)>>3)<<11;
-		int green = (((cat_color[k]&0xE0)>>5)|((cat_color[k+1]&0x7)<<3));
-	    int blue = (cat_color[k]&0x1F);
+    for (int k = 0; k<20*2*20-1; k+=2) {
+        int red = ((cat_color[k+1]&0xF8)>>3)<<11;
+	int green = (((cat_color[k]&0xE0)>>5)|((cat_color[k+1]&0x7)<<3));
+	int blue = (cat_color[k]&0x1F);
 		
-		short int cat_pixel_color = red|((green<<5)|blue);
+	short int cat_pixel_color = red|((green<<5)|blue);
 		
-		plot_pixel(i,j,cat_pixel_color);
-		i++;
-		if (i == x+20) {
-			i=x;
-			j++;
-		}
-	} 
+	plot_pixel(i,j,cat_pixel_color);
+	i++;
+	if (i == x+20) {
+	    i=x;
+	    j++;
+	}
+    } 
 }
 
 void swap(int *x, int *y) {
-	int *temp = x;
-	x = y;
-	y = temp;
+    int *temp = x;
+    x = y;
+    y = temp;
 }
 	
