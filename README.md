@@ -7,7 +7,7 @@ The following image is a screenshot of the game simulated on CPUlator:
 This project was completed by Valentina and I.
 It is played on the DE1-SoC board.
 
-It can be simulated on CPUator by copying the array definitions in visuals.h to the respective function in the cat_and_mouse_game_code.c file.
+It can be simulated on CPUator by copying the array definitions in visuals.h to their respective functions in the cat_and_mouse_game_code.c file (equivalent to cat_mouse_game_testing.c).
 The warnings on CPUlator that need to be disabled are:
 1. Device-specific warnings
 2. Function nesting too deep
