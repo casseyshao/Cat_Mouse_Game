@@ -13,6 +13,8 @@ The warnings on CPUlator that need to be disabled are:
 2. Function nesting too deep
 3. Interrupt nesting too deep
 
+Next-Step: clean code by making one function for drawing screen images, and passing pixel array to be plotted as an argument. (This was not done previously for readability, as the simulator we used to test the game required all code to be in one file to compile).
+
 References:  
 [1] ECE243 Winter 2020 - Lab 7  
 [2]	W. D. Pullen, Think Labyrinth: Maze Algorithms. [Online]. Available: http://www.astrolog.org/labyrnth/algrithm.htm. [Accessed: 09-Apr-2020].  
