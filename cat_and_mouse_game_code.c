@@ -11,6 +11,8 @@ the time on the seven-segment HEX displays run out or the cat catches you.
 #include "visuals.h"
 
 /*global variable declarations*/
+
+//for drawing on VGA:
 volatile int pixel_buffer_start;
 
 //for the maze:
@@ -36,6 +38,8 @@ int seconds = 0;
 int msec = 0;
 
 /*function declarations*/
+
+//for drawing on VGA:
 void clear_screen(); //not used
 void start_screen();
 void game_screen();
@@ -51,10 +55,6 @@ void swap(int *x, int *y); //so far no use
 void clear_old_box(int x, int y);
 bool maze_limit(int x, int y, int direction_value);
 
-//for the timer:
-bool count_down_timer();
-void display_sub(int min, int sec);
-
 //for the maze:
 int adjacent(int dir[], int x, int y);
 void dfs(int x, int y);
@@ -62,6 +62,10 @@ void map(void);
 void plot_H_dash(int x, int y, short int color);
 void plot_V_dash(int x, int y);
 void draw_entrance_exit();
+
+//for the timer:
+bool count_down_timer();
+void display_sub(int min, int sec);
 
 int main(void)
 {
@@ -95,7 +99,7 @@ int main(void)
     int cat_old_y_box = cat_y_box;
 
     //set front pixel buffer to start of FPGA On-chip memory
-    //first store the address is the back buffer
+    //first store the address in the back buffer
     *(pixel_ctrl_ptr + 1) = 0xC8000000;
 	
     //now, swap the front/back buffers, to set the front buffer location
@@ -288,7 +292,7 @@ int main(void)
 	    draw_entrance_exit();
 	    wait_for_vsync();
 	    pixel_buffer_start = *(pixel_ctrl_ptr + 1);
-	    game_screen(); map();	//plot maze
+	    game_screen(); map(); //plot maze
 	    draw_entrance_exit();
   
 	    //initialize mouse position
@@ -457,11 +461,11 @@ int main(void)
 	
         //check to see if cat caught mouse
 	bool cat_caught_mouse = false;
-	if( ((y_box>=cat_y_box && y_box<=cat_y_box+20)||(y_box+20>=cat_y_box && y_box+20<=cat_y_box+20))//mouse hits the cat on the left or right
+	if( ((y_box>=cat_y_box && y_box<=cat_y_box+20)||(y_box+20>=cat_y_box && y_box+20<=cat_y_box+20)) //mouse hits the cat on the left or right
 		    &&((x_box == cat_x_box+20)||(x_box+20 == cat_x_box))){
 	    cat_caught_mouse = true;	
 	}
-	if( ((x_box>=cat_x_box && x_box<=cat_x_box+20)||(x_box+20>=cat_x_box && x_box+20<=cat_x_box+20))//mouse hits the cat on the top or bottom
+	if( ((x_box>=cat_x_box && x_box<=cat_x_box+20)||(x_box+20>=cat_x_box && x_box+20<=cat_x_box+20)) //mouse hits the cat on the top or bottom
 			&&((y_box+20 == cat_y_box)||(y_box == cat_y_box+20))){
 	    cat_caught_mouse = true;
 	}
@@ -664,7 +668,6 @@ void clear_screen() {
 	}
     }
 }
-//end maze functions
 
 void start_screen() {
 	
